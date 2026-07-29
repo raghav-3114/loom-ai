@@ -121,7 +121,7 @@ function routeIntent(state) {
 
 // Reviewer edge retry loop decision function
 function routeReview(state) {
-  if (state.approved || (state.retryCount || 0) >= 1) {
+  if (state.approved || (state.retryCount || 0) > 1) {
     return 'end';
   }
   return 'builder';
