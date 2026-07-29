@@ -56,7 +56,10 @@ router.post('/', async (req, res) => {
 
     const explanationText = result.explanation || '';
     const summaryText = result.summary || 'Files updated successfully.';
-    const finalFiles = result.files || existingFiles;
+    const intent = result.intent || 'edit';
+    // Explain and debug are read-only: never overwrite files with an empty/undefined result
+    const isReadOnly = intent === 'explain' || intent === 'debug' || intent === 'off_topic';
+    const finalFiles = isReadOnly ? existingFiles : (result.files && Object.keys(result.files).length > 0 ? result.files : existingFiles);
 
     // Append to messages list
     const updatedMessages = [
@@ -88,6 +91,7 @@ router.post('/', async (req, res) => {
     res.write(`data: ${JSON.stringify({
       type: 'done',
       projectId,
+      intent,
       files: finalFiles,
       explanation: explanationText,
       summary: summaryText,

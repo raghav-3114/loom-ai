@@ -86,7 +86,12 @@ export function ChatProvider({ children }) {
               } else if (data.type === 'done') {
                 // Done event contains complete files & explanation
                 setActiveProjectId(data.projectId);
-                setFiles(data.files || {});
+                
+                // Explain/debug/off_topic are read-only — never reset file state
+                const isReadOnly = data.intent === 'explain' || data.intent === 'debug' || data.intent === 'off_topic';
+                if (!isReadOnly && data.files && Object.keys(data.files).length > 0) {
+                  setFiles(data.files);
+                }
                 
                 // If it is new project, update project title
                 if (isNew) {
@@ -115,7 +120,8 @@ export function ChatProvider({ children }) {
       const errorMsg = {
         id: `err-${Date.now()}`,
         role: 'assistant',
-        content: `Error generating project: ${error.message}. Please configure API keys or verify backend connectivity.`,
+        isError: true,
+        content: `Error: ${error.message}. Please check that the server is running and your API keys are configured correctly.`,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
       setMessages((prev) => [...prev, errorMsg]);
