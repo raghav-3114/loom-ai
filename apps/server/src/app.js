@@ -15,6 +15,7 @@ const generateRoutes = require('./routes/generate.routes');
 const uploadRoutes = require('./routes/upload.routes');
 const chatRoutes = require('./routes/chat.routes');
 const downloadRoutes = require('./routes/download.routes');
+const settingsRoutes = require('./routes/settings.routes');
 
 // Fail-fast environment validation
 const env = validateEnv();
@@ -33,6 +34,7 @@ app.use('/api/generate', generateRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/download', downloadRoutes);
+app.use('/api/settings', settingsRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
