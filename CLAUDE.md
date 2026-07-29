@@ -109,12 +109,12 @@ Use a monorepo with workspaces (`apps/web`, `apps/server`) so both apps share ro
 - `main` is always deployable. No direct commits to `main` during active feature work.
 - Branch naming: `feature/<short-desc>`, `fix/<short-desc>` (e.g., `feature/react-tailwind-preview`).
 - Commit messages: short, imperative (`Add reviewer retry loop`, `Fix React zip export missing tailwind.config.js`).
-- Given the 4-day timeline: small, frequent commits over large batched ones — easier to revert if an agent-generated change breaks something.
+- Given the 2-day timeline: small, frequent commits over large batched ones — easier to revert if an agent-generated change breaks something.
 - PRs are optional for a 4-person hackathon team, but any change touching the agent pipeline (`apps/server/src/agents/`) or either stack module (`apps/server/src/stacks/`) should get at least one other teammate's eyes before merging to `main`.
 
 ## Testing Strategy
 
-Given the 4-day constraint, testing is intentionally lightweight and targeted — not skipped, but scoped:
+Given the 2-day constraint, testing is intentionally lightweight and targeted — not skipped, but scoped:
 
 - **Manual smoke test after every merge to `main`**: run the full demo flow (generate in Vanilla → generate in React + Tailwind → explain → debug → download) once.
 - **Unit tests only for pure logic that's easy to break silently**: zip export (both stack layouts), file validation on upload (both stacks), Router intent classification parsing (mock the model response, test the parsing/validation layer).
@@ -138,7 +138,7 @@ Claude should **not**, without explicit user request:
 ## Package Installation Rules
 
 - Before adding any new npm package, check if the existing stack (React, Vite, Tailwind, Express, LangGraph, better-sqlite3) already covers the need.
-- **React live preview must use a proven in-browser bundling/sandbox library** (e.g., Sandpack by CodeSandbox) rather than a hand-rolled Babel/webpack pipeline — building a custom in-browser bundler is not a good use of hackathon time and is a common way to blow the 4-day budget.
+- **React live preview must use a proven in-browser bundling/sandbox library** (e.g., Sandpack by CodeSandbox) rather than a hand-rolled Babel/webpack pipeline — building a custom in-browser bundler is not a good use of hackathon time and is a common way to blow the 2-day budget.
 - Prefer well-maintained, widely-used packages. Avoid anything unmaintained (no commits >2 years) or with very low weekly downloads for a hackathon dependency.
 - Zip export: use `archiver` or `jszip` — pick one and use it consistently across both stacks, don't mix.
 - SQLite client: use `better-sqlite3` (synchronous, simple, fast enough at MVP scale) rather than `sqlite3` (async, more setup overhead) unless the user specifies otherwise.
@@ -237,7 +237,7 @@ Claude should **not**, without explicit user request:
 
 ## Hackathon Priorities
 
-Ordered priority for the 4-day build — if time runs short, cut from the bottom, not the top:
+Ordered priority for the 2-day build — if time runs short, cut from the bottom, not the top:
 
 1. Vanilla: Generate → Live Preview working end-to-end
 2. Vanilla: Upload → Live Preview working end-to-end
@@ -250,7 +250,7 @@ Ordered priority for the 4-day build — if time runs short, cut from the bottom
 9. Polish (loading states, error messages, UI styling pass)
 10. Stretch goals (responsive suggestions, accessibility, Vanilla→React migration assistant)
 
-Feature freeze after Day 2 evening — Days 3–4 are integration, bug-fixing, demo polish, and rehearsal only. Get Vanilla fully solid before starting React + Tailwind; do not build both in parallel from scratch with a 4-person team on a 4-day clock.
+Feature freeze after Day 1 evening — Day 2 are integration, bug-fixing, demo polish, and rehearsal only. Get Vanilla fully solid before starting React + Tailwind; do not build both in parallel from scratch with a 4-person team on a 2-day clock.
 
 ## Definition of Done (Engineering)
 
@@ -277,7 +277,7 @@ A feature is "done" only when:
 - Always keep Builder Agent output as complete, valid files — never partial diffs — for whichever stack is active.
 - Always sandbox any rendering of generated/uploaded code, using the appropriate mechanism for the stack (iframe srcDoc for Vanilla, bundler sandbox for React + Tailwind).
 - Always fail fast and loud on missing required environment variables at startup.
-- Always prefer the simplest solution that meets the 4-day deadline over the "more correct" solution that doesn't fit the timeline.
+- Always prefer the simplest solution that meets the 2-day deadline over the "more correct" solution that doesn't fit the timeline.
 - Always keep error messages in plain, beginner-friendly language on user-facing surfaces.
 - Always tag project/agent state with an explicit `stack` field rather than inferring it implicitly from file contents at every step.
 
