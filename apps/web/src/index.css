@@ -1,6 +1,14 @@
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DotGothic16&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
 @import "tailwindcss";
+
+@font-face {
+  font-family: 'NDot57';
+  src: url('/fonts/Ndot57-Regular.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
 
 @layer base {
   :root {
@@ -44,8 +52,8 @@
   }
 
   h1, h2, h3, h4, h5, h6, .font-display {
-    font-family: 'DotGothic16', 'Plus Jakarta Sans', system-ui, sans-serif;
-    letter-spacing: 0.05em; 
+    font-family: 'NDot57', 'Plus Jakarta Sans', system-ui, sans-serif;
+    letter-spacing: 0.08em; /* Adjusted tracking for proper spacing so it's not clubbed together */
   }
 }
 
