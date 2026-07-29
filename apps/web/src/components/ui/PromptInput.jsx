@@ -29,7 +29,7 @@ export function PromptInput({ onSend, isGenerating = false }) {
   };
 
   return (
-    <div className="w-full relative bg-slate-900/80 backdrop-blur-xl border border-white/12 rounded-2xl p-3 shadow-2xl focus-within:border-indigo-500/50 focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all duration-300">
+    <div className="w-full relative bg-[#0a0a0a]/95 backdrop-blur-3xl border border-white/10 rounded-3xl p-3.5 shadow-2xl focus-within:border-indigo-500/60 focus-within:ring-[3px] focus-within:ring-indigo-500/20 transition-all duration-300">
       {/* Input Textarea */}
       <textarea
         value={promptText}
@@ -37,53 +37,54 @@ export function PromptInput({ onSend, isGenerating = false }) {
         onKeyDown={handleKeyDown}
         placeholder={
           activeStack === 'vanilla'
-            ? 'Describe your Vanilla HTML/CSS/JS project or ask to explain/debug code...'
-            : 'Describe your React + Tailwind component or ask to explain/debug JSX...'
+            ? 'Describe your Vanilla project or ask a question...'
+            : 'Describe your React + Tailwind project or ask a question...'
         }
         rows={2}
-        className="w-full bg-transparent text-slate-100 placeholder-slate-500 text-sm resize-none focus:outline-none custom-scrollbar px-1 py-0.5"
+        className="w-full bg-transparent text-zinc-100 placeholder-zinc-500 text-[16px] font-medium resize-none focus:outline-none custom-scrollbar px-3 py-1.5 leading-relaxed"
         maxLength={2000}
       />
 
       {/* Toolbar Controls */}
-      <div className="flex items-center justify-between pt-2 border-t border-white/5 mt-1">
+      <div className="flex items-center justify-between pt-4 border-t border-white/5 mt-2">
         {/* Left: Stack Selector & File Actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3 px-1">
           {/* Stack Toggle */}
-          <div className="flex items-center bg-slate-950/80 p-0.5 rounded-xl border border-white/10 text-xs">
+          <div className="flex items-center bg-[#111] p-1 rounded-2xl border border-white/5 text-xs font-display">
             <button
               type="button"
               onClick={() => setActiveStack('vanilla')}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg transition-all ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all ${
                 activeStack === 'vanilla'
-                  ? 'bg-indigo-600 text-white font-medium shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-zinc-800 text-white font-bold shadow-md'
+                  : 'text-zinc-500 hover:text-zinc-300'
               }`}
             >
-              <Layers className="w-3 h-3" />
+              <Layers className="w-4 h-4" />
               <span>Vanilla</span>
             </button>
             <button
               type="button"
               onClick={() => setActiveStack('react-tailwind')}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg transition-all ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all ${
                 activeStack === 'react-tailwind'
-                  ? 'bg-purple-600 text-white font-medium shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-zinc-800 text-white font-bold shadow-md'
+                  : 'text-zinc-500 hover:text-zinc-300'
               }`}
             >
-              <Sparkles className="w-3 h-3" />
-              <span>React + Tailwind</span>
+              <Sparkles className="w-4 h-4" />
+              <span>React</span>
             </button>
           </div>
+
+          <div className="w-px h-6 bg-white/10 mx-1" />
 
           {/* Upload Button */}
           <button
             type="button"
             onClick={() => setIsUploadModalOpen(true)}
-            className="p-2 text-slate-400 hover:text-slate-200 hover:bg-white/5 rounded-xl transition-colors"
-            title="Upload Project Zip/Files"
-            aria-label="Upload Project"
+            className="p-2.5 text-zinc-500 hover:text-zinc-200 hover:bg-white/5 rounded-2xl transition-colors"
+            title="Upload Project"
           >
             <Upload className="w-4 h-4" />
           </button>
@@ -92,27 +93,26 @@ export function PromptInput({ onSend, isGenerating = false }) {
           <button
             type="button"
             onClick={() => showToast('Attach file snippet feature ready', 'info')}
-            className="p-2 text-slate-400 hover:text-slate-200 hover:bg-white/5 rounded-xl transition-colors"
+            className="p-2.5 text-zinc-500 hover:text-zinc-200 hover:bg-white/5 rounded-2xl transition-colors"
             title="Attach Snippet"
-            aria-label="Attach Snippet"
           >
             <Paperclip className="w-4 h-4" />
           </button>
         </div>
 
         {/* Right: Character Counter & Send */}
-        <div className="flex items-center gap-3">
-          <span className="text-[11px] text-slate-500 font-mono">
+        <div className="flex items-center gap-5 pr-1">
+          <span className="text-xs text-zinc-600 font-mono font-medium">
             {promptText.length}/2000
           </span>
           <button
             type="button"
             onClick={handleSubmit}
             disabled={!promptText.trim() || isGenerating}
-            className="p-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-xl shadow-lg shadow-indigo-500/20 disabled:opacity-40 disabled:pointer-events-none transition-all active:scale-95"
+            className="p-3.5 bg-white hover:bg-zinc-200 text-black rounded-2xl shadow-xl hover:shadow-indigo-500/30 disabled:opacity-30 disabled:pointer-events-none transition-all active:scale-95 group"
             aria-label="Send Message"
           >
-            <Send className="w-4 h-4" />
+            <Send className="w-4 h-4 translate-x-[1px] translate-y-[1px] group-hover:text-indigo-600 transition-colors" />
           </button>
         </div>
       </div>

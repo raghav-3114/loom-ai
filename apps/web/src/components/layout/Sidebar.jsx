@@ -32,7 +32,7 @@ export function Sidebar() {
 
   return (
     <aside
-      className={`h-full bg-slate-950/80 border-r border-white/10 flex flex-col justify-between transition-all duration-300 backdrop-blur-xl z-20 ${
+      className={`h-full bg-[#0a0a0a]/95 border-r border-white/5 flex flex-col justify-between transition-all duration-300 backdrop-blur-2xl z-20 ${
         sidebarCollapsed ? 'w-16' : 'w-64'
       }`}
     >
@@ -42,7 +42,7 @@ export function Sidebar() {
           {!sidebarCollapsed && <LoomLogo size="md" />}
           <button
             onClick={toggleSidebar}
-            className="p-1.5 text-slate-400 hover:text-slate-200 hover:bg-white/5 rounded-xl transition-colors"
+            className="p-1.5 text-zinc-500 hover:text-zinc-200 hover:bg-white/5 rounded-xl transition-colors"
             title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
@@ -54,7 +54,7 @@ export function Sidebar() {
         <div className="px-3 py-2">
           <button
             onClick={handleNewChat}
-            className={`w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 hover:text-white border border-indigo-500/30 transition-all font-medium text-xs shadow-sm ${
+            className={`w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white border border-white/5 transition-all font-display font-medium text-xs shadow-sm ${
               sidebarCollapsed ? 'px-2' : ''
             }`}
           >
@@ -68,7 +68,7 @@ export function Sidebar() {
           <div className="px-3 py-3 space-y-4 overflow-y-auto max-h-[calc(100vh-220px)] custom-scrollbar">
             {/* Recent Conversations */}
             <div className="space-y-1">
-              <div className="px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+              <div className="px-3 text-[10px] font-display font-semibold text-zinc-500 uppercase tracking-wider mb-2">
                 Recent Chats
               </div>
               {recentChats.map((chat) => (
@@ -83,7 +83,7 @@ export function Sidebar() {
 
             {/* Projects */}
             <div className="space-y-1">
-              <div className="px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+              <div className="px-3 text-[10px] font-display font-semibold text-zinc-500 uppercase tracking-wider mb-2 mt-4">
                 Projects
               </div>
               {recentProjects.map((project) => (
@@ -100,7 +100,7 @@ export function Sidebar() {
       </div>
 
       {/* Footer Settings */}
-      <div className="p-3 border-t border-white/10">
+      <div className="p-3 border-t border-white/5">
         <SidebarItem
           icon={Settings}
           label="Settings"
