@@ -14,19 +14,19 @@ const env = validateEnv();
 // Map generic model configs to actual provider model names
 const MODEL_MAPPING = {
   groq: {
-    'qwen-2.5-3b-instruct': 'llama-3.1-8b-instant',
-    'gemini-2.5-flash': 'llama-3.3-70b-versatile',
-    'llama-3.1-8b': 'llama-3.3-70b-versatile',
+    'qwen-2.5-3b-instruct': 'llama-3.1-8b-instant',   // fast classifier
+    'gemini-2.5-flash':     'llama-3.3-70b-versatile',  // best code-gen on Groq
+    'llama-3.1-8b':         'llama-3.1-8b-instant',
   },
   gemini: {
     'qwen-2.5-3b-instruct': 'gemini-2.0-flash',
-    'gemini-2.5-flash': 'gemini-2.0-flash',
-    'llama-3.1-8b': 'gemini-2.0-flash',
+    'gemini-2.5-flash':     'gemini-2.0-flash',
+    'llama-3.1-8b':         'gemini-2.0-flash',
   },
   openrouter: {
     'qwen-2.5-3b-instruct': 'qwen/qwen-2.5-coder-32b-instruct',
-    'gemini-2.5-flash': 'google/gemini-flash-1.5',
-    'llama-3.1-8b': 'meta-llama/llama-3.1-8b-instruct',
+    'gemini-2.5-flash':     'google/gemini-flash-1.5',
+    'llama-3.1-8b':         'meta-llama/llama-3.1-8b-instruct',
   }
 };
 
@@ -82,13 +82,25 @@ async function executeModelCall({ agentRole, messages, responseFormat }) {
     primaryModel = env.REVIEWER_MODEL;
   }
 
-  // Define fallbacks list
-  const providersPriority = [
+  // Define fallbacks list — Groq first (fastest, working), OpenRouter last (currently unreachable)
+  const basePriorities = [
     { provider: primaryProvider, model: primaryModel },
-    { provider: 'groq', model: 'llama-3.1-8b' },
+    { provider: 'groq', model: 'gemini-2.5-flash' },     // maps to llama-3.3-70b-versatile on Groq
+    { provider: 'groq', model: 'llama-3.1-8b' },          // maps to llama-3.1-8b-instant on Groq
     { provider: 'gemini', model: 'gemini-2.5-flash' },
-    { provider: 'openrouter', model: 'llama-3.1-8b' },
+    { provider: 'openrouter', model: 'llama-3.1-8b' },    // last: unreachable on some networks
   ];
+
+  // Filter list to keep only unique combinations
+  const seen = new Set();
+  const providersPriority = [];
+  for (const item of basePriorities) {
+    const key = `${item.provider}:${item.model}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      providersPriority.push(item);
+    }
+  }
 
   let lastError = null;
 
