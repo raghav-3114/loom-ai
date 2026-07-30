@@ -12,15 +12,15 @@ import ChatWorkspace from './components/workspace/ChatWorkspace';
 import UploadPanel from './components/upload/UploadPanel';
 import SettingsModal from './components/settings/SettingsModal';
 import Toast from './components/ui/Toast';
+import CustomCursor from './components/ui/CustomCursor';
 
 function AppContent() {
   const { viewMode, toastMessage } = useUI();
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-slate-100 font-mono antialiased overflow-hidden relative">
-      {/* Global film-grain texture, sits above the background, below content */}
-      <div className="grain-overlay" />
-
+    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans antialiased overflow-hidden relative">
+      <CustomCursor />
+      
       {/* Dynamic View Transition */}
       {viewMode === 'landing' ? <LandingView /> : <ChatWorkspace />}
 

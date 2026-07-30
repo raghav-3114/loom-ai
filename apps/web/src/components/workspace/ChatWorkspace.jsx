@@ -33,7 +33,7 @@ export function ChatWorkspace() {
   };
 
   return (
-    <div className="h-screen w-screen flex overflow-hidden bg-slate-950 text-slate-100 select-none">
+    <div className="h-screen w-screen flex overflow-hidden bg-[#050505] text-zinc-100 select-none font-sans">
       {/* Left Sidebar */}
       <Sidebar />
 
@@ -45,7 +45,7 @@ export function ChatWorkspace() {
       {/* Resizable Drag Splitter Handle */}
       <div
         onMouseDown={handleMouseDown}
-        className={`w-1.5 h-full bg-slate-900 hover:bg-indigo-500/50 cursor-col-resize flex items-center justify-center transition-colors z-30 ${
+        className={`w-1.5 h-full bg-[#111111] hover:bg-indigo-500/50 cursor-col-resize flex items-center justify-center transition-colors z-30 ${
           isDragging ? 'bg-indigo-500 shadow-[0_0_12px_#6366f1]' : ''
         }`}
         title="Drag to resize Live Preview panel"
