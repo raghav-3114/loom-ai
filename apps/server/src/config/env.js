@@ -70,9 +70,12 @@ function validateEnv() {
     ROUTER_PROVIDER: process.env.ROUTER_PROVIDER || 'groq',
     ROUTER_MODEL: process.env.ROUTER_MODEL || 'qwen-2.5-3b-instruct',
     
+    PLANNER_PROVIDER: process.env.PLANNER_PROVIDER || 'groq',
+    PLANNER_MODEL: process.env.PLANNER_MODEL || 'gemini-2.5-flash',
+
     BUILDER_PROVIDER: process.env.BUILDER_PROVIDER || 'gemini',
     BUILDER_MODEL: process.env.BUILDER_MODEL || 'gemini-2.5-flash',
-    
+
     REVIEWER_PROVIDER: process.env.REVIEWER_PROVIDER || 'groq',
     REVIEWER_MODEL: process.env.REVIEWER_MODEL || 'llama-3.1-8b',
   };

@@ -6,6 +6,7 @@
 
 const { StateGraph, Annotation, START, END } = require('@langchain/langgraph');
 const { routerNode } = require('./router.agent');
+const { plannerNode } = require('./planner.agent');
 const { builderNode } = require('./builder.agent');
 const { reviewerNode } = require('./reviewer.agent');
 const { executeModelCall } = require('../providers/provider-manager');
@@ -18,6 +19,8 @@ const GraphState = Annotation.Root({
   stack: Annotation(),
   intent: Annotation(),
   reasoning: Annotation(),
+  designSpec: Annotation(),
+  planningFailed: Annotation(),
   summary: Annotation(),
   actions: Annotation(),
   approved: Annotation(),
@@ -116,6 +119,12 @@ function routeIntent(state) {
   if (state.intent === 'off_topic') return 'off_topic';
   if (state.intent === 'explain') return 'explain';
   if (state.intent === 'debug') return 'debug';
+  return 'planner';
+}
+
+// Planner edge decision function — Builder must never run with an invalid/missing spec
+function routePlanning(state) {
+  if (state.planningFailed) return 'end';
   return 'builder';
 }
 
@@ -130,20 +139,26 @@ function routeReview(state) {
 // Construct state machine graph workflow
 const workflow = new StateGraph(GraphState)
   .addNode('router', routerNode)
+  .addNode('planner', plannerNode)
   .addNode('builder', builderNode)
   .addNode('reviewer', reviewerNode)
   .addNode('explain', explainNode)
   .addNode('debug', debugNode)
   .addNode('off_topic', offTopicNode)
-  
+
   .addEdge(START, 'router')
   .addConditionalEdges('router', routeIntent, {
     off_topic: 'off_topic',
     explain: 'explain',
     debug: 'debug',
+    planner: 'planner'
+  })
+
+  .addConditionalEdges('planner', routePlanning, {
+    end: END,
     builder: 'builder'
   })
-  
+
   .addEdge('builder', 'reviewer')
   .addConditionalEdges('reviewer', routeReview, {
     end: END,

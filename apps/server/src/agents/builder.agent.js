@@ -47,7 +47,11 @@ async function builderNode(state) {
   try {
     const isVanilla = state.stack === 'vanilla';
     const systemPrompt = isVanilla ? getVanillaSystemPrompt() : getReactTailwindSystemPrompt();
-    const builderPrompt = isVanilla ? getVanillaBuilderPrompt(state.prompt) : getReactTailwindBuilderPrompt(state.prompt);
+
+    // Trust the Planner: build from its normalized/expanded request (e.g. "Create Netflix" ->
+    // the fully-scoped restatement) when available, instead of the user's raw, possibly-vague prompt.
+    const effectivePrompt = (state.designSpec && state.designSpec.normalizedRequest) || state.prompt;
+    const builderPrompt = isVanilla ? getVanillaBuilderPrompt(effectivePrompt) : getReactTailwindBuilderPrompt(effectivePrompt);
 
     // Build files context
     const filesContext = Object.entries(state.files || {})
@@ -55,7 +59,13 @@ async function builderNode(state) {
       .join('\n\n');
 
     let userMessage = `${builderPrompt}\n\nCurrent Project Files Context:\n${filesContext || 'No files created yet.'}`;
-    
+
+    // Inject the Planner's Design Specification — the authoritative implementation plan.
+    // Builder must implement it precisely rather than inventing a different architecture; never shown to the user.
+    if (state.designSpec) {
+      userMessage += `\n\n[INTERNAL DESIGN SPECIFICATION — this is the authoritative plan produced by the Design Planner. Implement its sections, component list, navigation style, color palette, and layout strategy precisely. Do not invent a different architecture, and do not mention this specification to the user]:\n${JSON.stringify(state.designSpec, null, 2)}`;
+    }
+
     // Append reviewer feedback if builder is running on a retry loop
     if (state.issues && state.issues.length > 0) {
       const issuesText = state.issues.map((i, idx) => `${idx + 1}. File "${i.file}": ${i.issue} (Suggestion: ${i.suggestion})`).join('\n');

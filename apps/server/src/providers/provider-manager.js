@@ -76,6 +76,9 @@ async function executeModelCall({ agentRole, messages, responseFormat }) {
   if (agentRole === 'router') {
     primaryProvider = env.ROUTER_PROVIDER;
     primaryModel = env.ROUTER_MODEL;
+  } else if (agentRole === 'planner') {
+    primaryProvider = env.PLANNER_PROVIDER;
+    primaryModel = env.PLANNER_MODEL;
   } else if (agentRole === 'builder') {
     primaryProvider = env.BUILDER_PROVIDER;
     primaryModel = env.BUILDER_MODEL;

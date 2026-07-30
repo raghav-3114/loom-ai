@@ -17,11 +17,12 @@ function getReactTailwindSystemPrompt() {
 
 /**
  * Loads builder prompt for React + Tailwind project generation.
- * @param {string} userPrompt - User prompt describing requested UI.
+ * @param {string} userPrompt - User prompt describing requested UI (or the Planner's
+ *   normalized/expanded request when a Design Specification is available).
  * @returns {string} Formatted prompt string for Builder agent.
  */
 function getReactTailwindBuilderPrompt(userPrompt) {
-  return `Generate a React + Tailwind component based on this request: "${userPrompt}"`;
+  return `Implement a production-quality React + Tailwind component/page for this request: "${userPrompt}"\nIf an [INTERNAL DESIGN SPECIFICATION] is provided below, treat it as the authoritative plan and implement it precisely rather than inventing your own structure.`;
 }
 
 module.exports = {
