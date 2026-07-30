@@ -63,11 +63,42 @@ const builderOutputSchema = z.object({
   filesToDelete: z.array(z.string()),
 });
 
-/** Schema for Reviewer Agent output structure */
+/** The 16 dimensions the Reviewer must score every project against. */
+const REVIEW_DIMENSIONS = [
+  'visualHierarchy', 'layoutQuality', 'designDensity', 'responsiveness', 'componentReuse',
+  'interactionDesign', 'animation', 'accessibility', 'typography', 'colorHarmony', 'spacing',
+  'modernUiStandards', 'promptFulfillment', 'plannerCompliance', 'codeQuality', 'maintainability',
+];
+
+/** A single scored dimension. Defaults to a visible "not evaluated" placeholder rather than
+ *  silently dropping the dimension when a small/fast model omits it. */
+const dimensionResultSchema = z.object({
+  status: z.enum(['PASS', 'WARNING', 'FAIL']).default('WARNING'),
+  reasoning: z.string().default('Not evaluated.'),
+});
+
+const scorecardSchema = z.object(
+  Object.fromEntries(REVIEW_DIMENSIONS.map((key) => [key, dimensionResultSchema.default({})]))
+);
+
+/** A single actionable issue Builder must act on — file/issue/suggestion is a stable
+ *  contract also relied on by builder.agent.js's retry-feedback formatting. */
+const reviewIssueSchema = z.object({
+  file: z.string().default('system'),
+  issue: z.string().default('Unspecified issue.'),
+  suggestion: z.string().default('Revise to meet the quality bar.'),
+});
+
+/**
+ * Schema for Reviewer Agent output structure.
+ * `approved` defaults to false (fail-closed) so a malformed/incomplete model response
+ * triggers Builder's single bounded retry instead of silently waving through weak output —
+ * this is the fix for the Reviewer previously behaving like a lenient compiler.
+ */
 const reviewerOutputSchema = z.object({
-  approved: z.boolean(),
-  issues: z.array(z.string()),
-  suggestions: z.array(z.string()),
+  approved: z.boolean().default(false),
+  scorecard: scorecardSchema.default({}),
+  issues: z.array(reviewIssueSchema).default([]),
 });
 
 module.exports = {
@@ -75,4 +106,5 @@ module.exports = {
   designSpecSchema,
   builderOutputSchema,
   reviewerOutputSchema,
+  REVIEW_DIMENSIONS,
 };
