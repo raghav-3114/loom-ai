@@ -3,7 +3,7 @@
  * @description Context for managing chat message history, active input text, streaming state, and SSE stream parser.
  */
 
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
 import { useProject } from './ProjectContext';
 
 const ChatContext = createContext(null);
@@ -25,7 +25,7 @@ export function ChatProvider({ children }) {
   const [thinkingStep, setThinkingStep] = useState(null);
   const [activeProjectId, setActiveProjectId] = useState(null);
 
-  const sendMessage = async (text, stack = activeStack) => {
+  const sendMessage = useCallback(async (text, stack = activeStack) => {
     if (!text || !text.trim()) return;
 
     const userMsg = {
@@ -168,15 +168,19 @@ export function ChatProvider({ children }) {
       setIsGenerating(false);
       setThinkingStep(null);
     }
-  };
+  }, [activeStack, activeProjectId, setFiles, setProjectTitle]);
 
-  const clearChat = () => {
+  const clearChat = useCallback(() => {
     setMessages(INITIAL_MESSAGES);
     setActiveProjectId(null);
     setFiles({});
-  };
+  }, [setFiles]);
 
-  const value = {
+  // Memoized so the context value only changes reference when actual chat
+  // state changes — otherwise every consumer (including components that only
+  // need e.g. activeProjectId) re-renders on every keystroke typed into the
+  // prompt box, cascading into anything downstream that isn't memoized.
+  const value = useMemo(() => ({
     messages,
     promptText,
     setPromptText,
@@ -186,7 +190,7 @@ export function ChatProvider({ children }) {
     clearChat,
     activeProjectId,
     setActiveProjectId,
-  };
+  }), [messages, promptText, isGenerating, thinkingStep, sendMessage, clearChat, activeProjectId]);
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;
 }

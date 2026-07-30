@@ -5,7 +5,10 @@
 
 import React, { useMemo } from 'react';
 
-export function VanillaPreview({ files }) {
+// Wrapped in React.memo so the iframe skips re-rendering entirely whenever an
+// ancestor re-renders for an unrelated reason but `files` hasn't actually
+// changed — belt-and-suspenders alongside the useMemo below.
+export const VanillaPreview = React.memo(function VanillaPreview({ files }) {
   const htmlContent = useMemo(() => {
     const html = files['index.html'] || '<h1>Vanilla Preview</h1>';
     const css = files['style.css'] || '';
@@ -33,6 +36,6 @@ export function VanillaPreview({ files }) {
       className="w-full h-full border-none bg-white rounded-xl shadow-inner"
     />
   );
-}
+});
 
 export default VanillaPreview;

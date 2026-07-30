@@ -11,13 +11,11 @@ import ProjectTree from './ProjectTree';
 import Tabs from '../ui/Tabs';
 import { useProject } from '../../contexts/ProjectContext';
 import { useUI } from '../../contexts/UIContext';
-import { useChat } from '../../contexts/ChatContext';
 import EmptyState from '../ui/EmptyState';
 
 export function PreviewPane() {
   const { activeStack, files, activeFileName, setActiveFileName } = useProject();
   const { devicePreviewMode } = useUI();
-  const { messages } = useChat();
   const [refreshKey, setRefreshKey] = useState(0);
 
   const [isTreeCollapsed, setIsTreeCollapsed] = useState(false);

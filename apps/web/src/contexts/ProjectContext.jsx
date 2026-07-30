@@ -3,7 +3,7 @@
  * @description Context managing active project stack ("vanilla" | "react-tailwind"), project files, and active file state.
  */
 
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
 
 const ProjectContext = createContext(null);
 
@@ -16,13 +16,19 @@ export function ProjectProvider({ children }) {
   const [files, setFiles] = useState({});
   const [activeFileName, setActiveFileName] = useState(null);
 
-  const switchStack = (stack) => {
+  // Stable across renders (only calls stable useState setters) — safe to
+  // memoize unconditionally so consumers never see a new function identity.
+  const switchStack = useCallback((stack) => {
     setActiveStack(stack);
     setFiles({});
     setActiveFileName(null);
-  };
+  }, []);
 
-  const value = {
+  // Memoized so the context value only changes reference when the actual
+  // project data changes — otherwise every consumer (including the Live
+  // Preview renderers) re-renders on every ProjectProvider render, which
+  // for Sandpack-based previews means a full sandbox reset.
+  const value = useMemo(() => ({
     activeStack,
     setActiveStack: switchStack,
     projectTitle,
@@ -31,7 +37,7 @@ export function ProjectProvider({ children }) {
     setFiles,
     activeFileName,
     setActiveFileName,
-  };
+  }), [activeStack, switchStack, projectTitle, files, activeFileName]);
 
   return <ProjectContext.Provider value={value}>{children}</ProjectContext.Provider>;
 }
