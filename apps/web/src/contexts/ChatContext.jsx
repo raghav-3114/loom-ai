@@ -47,7 +47,16 @@ export function ChatProvider({ children }) {
       ? { prompt: text, stack }
       : { message: text, projectId: activeProjectId, stack };
 
-    try {
+    // Matches the "missing valid string content" malformed-JSON signature
+    // from a flaky fallback provider — safe to retry once client-side.
+    // This is purely a UX safety net; it never touches the server's own
+    // bounded Reviewer retry loop.
+    const isRetryableProviderGlitch = (message) =>
+      /missing valid string content/i.test(message || '');
+
+    // Runs a single generate/chat attempt end-to-end. Throws on any
+    // failure so the caller can decide whether to retry or surface it.
+    const attemptRequest = async () => {
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
@@ -64,9 +73,13 @@ export function ChatProvider({ children }) {
       const decoder = new TextDecoder();
       let buffer = '';
 
+      // Flag to propagate SSE-level errors to the outer catch
+      let sseError = null;
+
       while (true) {
         const { value, done } = await reader.read();
         if (done) break;
+        if (sseError) break; // stop reading if a server error event was received
 
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');
@@ -76,43 +89,69 @@ export function ChatProvider({ children }) {
           const cleanLine = line.trim();
           if (cleanLine.startsWith('data: ')) {
             const rawData = cleanLine.substring(6);
+            // Parse JSON safely — only catch actual parse failures here
+            let data;
             try {
-              const data = JSON.parse(rawData);
-              
-              if (data.type === 'thinking') {
-                setThinkingStep(data.message);
-              } else if (data.type === 'error') {
-                throw new Error(data.message);
-              } else if (data.type === 'done') {
-                // Done event contains complete files & explanation
-                setActiveProjectId(data.projectId);
-                
-                // Explain/debug/off_topic are read-only — never reset file state
-                const isReadOnly = data.intent === 'explain' || data.intent === 'debug' || data.intent === 'off_topic';
-                if (!isReadOnly && data.files && Object.keys(data.files).length > 0) {
-                  setFiles(data.files);
-                }
-                
-                // If it is new project, update project title
-                if (isNew) {
-                  setProjectTitle(text.substring(0, 30));
-                }
-
-                const assistantMsg = {
-                  id: `assistant-${Date.now()}`,
-                  role: 'assistant',
-                  stack,
-                  content: data.explanation || `I've updated the **${stack === 'vanilla' ? 'Vanilla' : 'React + Tailwind'}** files based on your request.`,
-                  summary: data.summary,
-                  timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                };
-                
-                setMessages((prev) => [...prev, assistantMsg]);
-              }
+              data = JSON.parse(rawData);
             } catch (e) {
               console.warn('[SSE Parser] JSON parse warning:', e);
+              continue; // skip malformed SSE frames
+            }
+
+            // Handle event types outside the JSON-parse try so errors escape cleanly
+            if (data.type === 'thinking') {
+              setThinkingStep(data.message);
+            } else if (data.type === 'error') {
+              // Record and break — will be thrown after the read loop exits
+              sseError = new Error(data.message);
+              break;
+            } else if (data.type === 'done') {
+              // Done event contains complete files & explanation
+              setActiveProjectId(data.projectId);
+
+              // Explain/debug/off_topic are read-only — never reset file state
+              const isReadOnly = data.intent === 'explain' || data.intent === 'debug' || data.intent === 'off_topic';
+              if (!isReadOnly && data.files && Object.keys(data.files).length > 0) {
+                setFiles(data.files);
+              }
+
+              // If it is new project, update project title
+              if (isNew) {
+                setProjectTitle(text.substring(0, 30));
+              }
+
+              const assistantMsg = {
+                id: `assistant-${Date.now()}`,
+                role: 'assistant',
+                stack,
+                content: data.explanation || `I've updated the **${stack === 'vanilla' ? 'Vanilla' : 'React + Tailwind'}** files based on your request.`,
+                summary: data.summary,
+                timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              };
+
+              setMessages((prev) => [...prev, assistantMsg]);
             }
           }
+        }
+      }
+
+      // Propagate any SSE-level error to the outer catch
+      if (sseError) throw sseError;
+    };
+
+    try {
+      try {
+        await attemptRequest();
+      } catch (error) {
+        // Exactly one automatic client-side retry, only for this specific
+        // provider-glitch signature — any other error (or a second failure
+        // of the same kind) falls through to the normal error message below.
+        if (isRetryableProviderGlitch(error.message)) {
+          console.warn('[ChatContext] Retryable provider glitch, retrying once:', error.message);
+          setThinkingStep('The AI provider returned an invalid response — retrying...');
+          await attemptRequest();
+        } else {
+          throw error;
         }
       }
     } catch (error) {

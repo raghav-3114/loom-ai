@@ -3,22 +3,35 @@
  * @description Main container for the Live Preview right panel, wrapping preview toolbar, device responsive frame, and dynamic stack renderers.
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PreviewToolbar from '../ui/PreviewToolbar';
 import VanillaPreview from './VanillaPreview';
 import ReactTailwindPreview from './ReactTailwindPreview';
+import ProjectTree from './ProjectTree';
+import Tabs from '../ui/Tabs';
 import { useProject } from '../../contexts/ProjectContext';
 import { useUI } from '../../contexts/UIContext';
 import { useChat } from '../../contexts/ChatContext';
 import EmptyState from '../ui/EmptyState';
 
 export function PreviewPane() {
-  const { activeStack, files } = useProject();
+  const { activeStack, files, activeFileName, setActiveFileName } = useProject();
   const { devicePreviewMode } = useUI();
   const { messages } = useChat();
   const [refreshKey, setRefreshKey] = useState(0);
 
-  const hasGeneratedCode = messages.length > 1;
+  const [isTreeCollapsed, setIsTreeCollapsed] = useState(false);
+  const [activeTab, setActiveTab] = useState('preview');
+
+  const hasGeneratedCode = Object.keys(files || {}).length > 0;
+
+  // Auto-select a sensible default file whenever new files arrive and
+  // nothing (or a now-stale filename) is currently selected.
+  useEffect(() => {
+    if (!hasGeneratedCode) return;
+    if (activeFileName && files[activeFileName] !== undefined) return;
+    setActiveFileName(Object.keys(files)[0]);
+  }, [files, hasGeneratedCode, activeFileName, setActiveFileName]);
 
   const deviceWidthClasses = {
     desktop: 'w-full h-full',
@@ -26,27 +39,71 @@ export function PreviewPane() {
     mobile: 'w-[375px] h-[667px] my-auto shadow-2xl rounded-3xl border-4 border-slate-800',
   };
 
+  const handleSelectFile = (filename) => {
+    setActiveFileName(filename);
+    setActiveTab('code');
+  };
+
+  const viewTabs = [
+    { id: 'preview', label: 'Live Preview' },
+    { id: 'code', label: 'Code View' },
+  ];
+
   return (
     <div className="h-full flex flex-col bg-slate-950/90 border-l border-white/10 overflow-hidden">
       {/* Top Toolbar */}
       <PreviewToolbar onRefresh={() => setRefreshKey((k) => k + 1)} />
 
-      {/* Main Preview Container Viewport */}
-      <div className="flex-1 flex items-center justify-center p-4 bg-slate-900/40 relative overflow-hidden custom-scrollbar">
-        {!hasGeneratedCode ? (
-          <EmptyState
-            title="Live Preview Standby"
-            description="Enter a prompt or choose a template to see your generated HTML/CSS/JS or React website render live."
+      {/* View Tabs bar */}
+      {hasGeneratedCode && (
+        <div className="px-4 py-2 border-b border-white/5 bg-slate-950/40 flex items-center justify-between">
+          <Tabs tabs={viewTabs} activeTab={activeTab} onChange={setActiveTab} />
+          {activeTab === 'code' && activeFileName && (
+            <span className="text-[11px] text-slate-500 font-mono italic">
+              Viewing: {activeFileName.startsWith('/') ? activeFileName.substring(1) : activeFileName}
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Main Body - Project Tree & Viewport Split */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Project Tree Sidebar */}
+        {hasGeneratedCode && (
+          <ProjectTree
+            files={files}
+            activeFileName={activeFileName}
+            onSelectFile={handleSelectFile}
+            isCollapsed={isTreeCollapsed}
+            onToggle={() => setIsTreeCollapsed(!isTreeCollapsed)}
           />
-        ) : (
-          <div key={refreshKey} className={`transition-all duration-300 ${deviceWidthClasses[devicePreviewMode]}`}>
-            {activeStack === 'vanilla' ? (
-              <VanillaPreview files={files} />
-            ) : (
-              <ReactTailwindPreview files={files} />
-            )}
-          </div>
         )}
+
+        {/* Viewport Area */}
+        <div className="flex-1 flex items-center justify-center p-4 bg-slate-900/40 relative overflow-hidden custom-scrollbar">
+          {!hasGeneratedCode ? (
+            <EmptyState
+              title="Live Preview Standby"
+              description="Enter a prompt or choose a template to see your generated HTML/CSS/JS or React website render live."
+            />
+          ) : activeTab === 'preview' ? (
+            <div key={refreshKey} className={`transition-all duration-300 ${deviceWidthClasses[devicePreviewMode]}`}>
+              {activeStack === 'vanilla' ? (
+                <VanillaPreview files={files} />
+              ) : (
+                <ReactTailwindPreview files={files} />
+              )}
+            </div>
+          ) : (
+            <div className="w-full h-full p-4 overflow-auto bg-slate-950/60 font-mono text-xs text-slate-300 leading-relaxed custom-scrollbar rounded-xl border border-white/10 select-text">
+              <div className="flex items-center justify-between pb-3 mb-3 border-b border-white/5 text-[11px] text-violet-400 font-medium">
+                <span>{activeFileName ? (activeFileName.startsWith('/') ? activeFileName.substring(1) : activeFileName) : '—'}</span>
+                <span className="text-[10px] text-slate-500 uppercase">{activeFileName ? activeFileName.split('.').pop() : ''} file</span>
+              </div>
+              <code className="block whitespace-pre">{activeFileName ? (files[activeFileName] || '// No content or select a file') : '// No file selected'}</code>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

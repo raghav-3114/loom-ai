@@ -15,6 +15,16 @@ const { repairJson } = require('../utils/json-repair');
  */
 async function reviewerNode(state) {
   try {
+    if (state.errors && state.errors.length > 0) {
+      console.warn('[ReviewerAgent] Skipping review because builder failed with errors:', state.errors);
+      return {
+        ...state,
+        approved: false,
+        issues: [{ file: 'system', issue: 'Builder agent failed to generate output.', suggestion: 'Retry generation.' }],
+        retryCount: (state.retryCount || 0) + 1,
+      };
+    }
+
     const isVanilla = state.stack === 'vanilla';
     const promptPath = path.join(
       __dirname,

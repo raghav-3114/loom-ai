@@ -26,7 +26,12 @@ export function ChatPanel() {
       {/* Scrollable Conversation Stream */}
       <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 custom-scrollbar">
         {messages.map((msg) => (
-          <MessageBubble key={msg.id} message={msg} onRegenerate={() => sendMessage(msg.content)} />
+          <MessageBubble
+            key={msg.id}
+            message={msg}
+            // Never re-submit error text as a new user turn — error messages have no regenerate
+            onRegenerate={msg.isError ? null : () => sendMessage(msg.content)}
+          />
         ))}
 
         {/* Thinking / Streaming Indicator */}

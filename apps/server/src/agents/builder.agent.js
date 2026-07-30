@@ -3,10 +3,40 @@
  * Dispatches to stack-specific prompt templates and returns structured JSON instructions.
  */
 
+const fs = require('fs');
+const path = require('path');
 const { getVanillaSystemPrompt, getVanillaBuilderPrompt } = require('../stacks/vanilla/prompts');
 const { getReactTailwindSystemPrompt, getReactTailwindBuilderPrompt } = require('../stacks/react-tailwind/prompts');
 const { executeModelCall } = require('../providers/provider-manager');
 const { repairJson } = require('../utils/json-repair');
+
+const VANILLA_BASE_CSS = fs.readFileSync(path.join(__dirname, '../stacks/vanilla/base.css'), 'utf8');
+const VANILLA_BASE_CSS_MARKER = '=== LOOM_BASE_DESIGN_SYSTEM ===';
+
+/**
+ * Ensures style.css always starts with the shared design-token base layer,
+ * regardless of whether the model included/preserved it. Idempotent — skips
+ * if the marker is already present so repeated edits don't duplicate it.
+ */
+function ensureVanillaBaseCss(updatedFiles) {
+  const current = updatedFiles['style.css'];
+  if (typeof current !== 'string') return;
+  if (current.includes(VANILLA_BASE_CSS_MARKER)) return;
+  updatedFiles['style.css'] = `${VANILLA_BASE_CSS}\n${current}`;
+}
+
+/**
+ * Strips a leading HTML-style comment (<!-- ... -->) that some models
+ * mistakenly prepend before the first real line of JS/JSX code — this is
+ * an ES-module syntax error and breaks Sandpack bundling. Only matches
+ * literal `<!-- -->` blocks anchored at the very start of the file (after
+ * whitespace); never touches line comments or block comments written in
+ * JS/JSDoc syntax, or any HTML comment that appears later in the file
+ * (e.g. inside JSX markup or string literals).
+ */
+function stripLeadingHtmlComment(content) {
+  return content.replace(/^\s*(?:<!--[\s\S]*?-->\s*)+/, '');
+}
 
 /**
  * Generates or modifies project files using structured actions.
@@ -43,6 +73,8 @@ async function builderNode(state) {
       responseFormat: { type: 'json_object' }
     });
 
+    console.log('[BuilderAgent] Raw LLM text:', result.text);
+
     let buildResult = { reasoning: '', summary: '', actions: [] };
     try {
       buildResult = repairJson(result.text);
@@ -53,16 +85,33 @@ async function builderNode(state) {
 
     // Apply file actions to the state files map
     const updatedFiles = { ...(state.files || {}) };
-    
+    const CONFIG_FILENAMES = ['tailwind.config.js', 'postcss.config.js', 'vite.config.js'];
+
     if (buildResult.actions && Array.isArray(buildResult.actions)) {
       for (const change of buildResult.actions) {
-        const { action, path, content } = change;
+        let { action, path, content } = change;
+
+        // React component files must use .jsx, never .js (config files are exempt)
+        if (!isVanilla && path && path.endsWith('.js') && !CONFIG_FILENAMES.includes(path.replace(/^\//, ''))) {
+          path = `${path.slice(0, -3)}.jsx`;
+        }
+
         if (action === 'delete') {
           delete updatedFiles[path];
         } else if (action === 'create' || action === 'update') {
+          if (typeof content !== 'string') {
+            throw new Error(`File action "${action}" for path "${path}" is missing valid string content.`);
+          }
+          if (path && (path.endsWith('.jsx') || path.endsWith('.js'))) {
+            content = stripLeadingHtmlComment(content);
+          }
           updatedFiles[path] = content;
         }
       }
+    }
+
+    if (isVanilla) {
+      ensureVanillaBaseCss(updatedFiles);
     }
 
     return {
@@ -71,8 +120,8 @@ async function builderNode(state) {
       reasoning: buildResult.reasoning,
       summary: buildResult.summary,
       actions: buildResult.actions,
-      // Clear issues once builder makes a new pass
       issues: null,
+      errors: [], // Clear any previous errors on success
     };
   } catch (error) {
     console.error('[BuilderAgent] Error:', error);

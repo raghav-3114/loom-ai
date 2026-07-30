@@ -5,3 +5,4 @@ dist
 *.sqlite
 *.sqlite-journal
 .DS_Store
+test-results/

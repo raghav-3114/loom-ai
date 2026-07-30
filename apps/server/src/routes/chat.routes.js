@@ -100,8 +100,11 @@ router.post('/', async (req, res) => {
     res.end();
   } catch (error) {
     console.error('[Chat Route] Error:', error);
-    res.write(`data: ${JSON.stringify({ type: 'error', message: `Chat failed: ${error.message}` })}\n\n`);
-    res.end();
+    // Guard against write-after-end if the client already disconnected
+    if (!res.writableEnded) {
+      res.write(`data: ${JSON.stringify({ type: 'error', message: `Chat failed: ${error.message}` })}\n\n`);
+      res.end();
+    }
   }
 });
 

@@ -10,6 +10,7 @@ const { validateEnv } = require('./config/env');
 const { logger } = require('./utils/logger');
 const { initDatabase } = require('./db/init');
 const { errorHandler } = require('./middleware/error-handler');
+const { rateLimit } = require('./middleware/rate-limit');
 
 const generateRoutes = require('./routes/generate.routes');
 const uploadRoutes = require('./routes/upload.routes');
@@ -29,10 +30,13 @@ app.use(express.json());
 // Initialize SQLite database
 initDatabase();
 
+// Basic in-memory rate limiting on AI-invoking endpoints to guard against runaway cost
+const aiRateLimit = rateLimit({ windowMs: 60 * 1000, max: 20 });
+
 // Route mounting
-app.use('/api/generate', generateRoutes);
+app.use('/api/generate', aiRateLimit, generateRoutes);
 app.use('/api/upload', uploadRoutes);
-app.use('/api/chat', chatRoutes);
+app.use('/api/chat', aiRateLimit, chatRoutes);
 app.use('/api/download', downloadRoutes);
 app.use('/api/settings', settingsRoutes);
 

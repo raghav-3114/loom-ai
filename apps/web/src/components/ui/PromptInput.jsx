@@ -4,12 +4,12 @@
  */
 
 import React from 'react';
-import { Send, Upload, Paperclip, Sparkles, Layers } from 'lucide-react';
+import { Send, Upload, Paperclip, Plus } from 'lucide-react';
 import { useProject } from '../../contexts/ProjectContext';
 import { useUI } from '../../contexts/UIContext';
 import { useChat } from '../../contexts/ChatContext';
 
-export function PromptInput({ onSend, isGenerating = false }) {
+export function PromptInput({ onSend, isGenerating = false, isLanding = false }) {
   const { activeStack, setActiveStack } = useProject();
   const { setIsUploadModalOpen, showToast } = useUI();
   const { promptText, setPromptText } = useChat();
@@ -27,6 +27,52 @@ export function PromptInput({ onSend, isGenerating = false }) {
       onSend(promptText, activeStack);
     }
   };
+
+  if (isLanding) {
+    return (
+      <div className="w-full relative flex items-center bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-2xl p-2.5 pl-3 pr-2.5 shadow-2xl focus-within:border-indigo-500/50 focus-within:ring-2 focus-within:ring-indigo-500/10 transition-all duration-300">
+        {/* Left: Upload Button (+) */}
+        <button
+          type="button"
+          onClick={() => setIsUploadModalOpen(true)}
+          className="p-2 text-slate-400 hover:text-slate-200 hover:bg-white/5 rounded-xl transition-all active:scale-95 flex items-center justify-center"
+          title="Upload Project Zip/Files"
+          aria-label="Upload Project"
+        >
+          <Plus className="w-5 h-5" />
+        </button>
+
+        {/* Input Textarea */}
+        <textarea
+          value={promptText}
+          onChange={(e) => setPromptText(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="What do you want to build?"
+          rows={1}
+          className="w-full bg-transparent text-slate-100 placeholder-slate-500 text-base resize-none focus:outline-none custom-scrollbar pl-2.5 pr-2 py-2"
+          maxLength={2000}
+        />
+
+        {/* Right: Character Counter & Send */}
+        <div className="flex items-center gap-3 ml-1">
+          {promptText.length > 0 && (
+            <span className="text-[10px] text-slate-500 font-mono hidden sm:inline">
+              {promptText.length}/2000
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={!promptText.trim() || isGenerating}
+            className="p-2.5 bg-white text-slate-950 hover:bg-slate-200 rounded-xl shadow-lg disabled:opacity-30 disabled:pointer-events-none transition-all active:scale-95 flex items-center justify-center"
+            aria-label="Send Message"
+          >
+            <Send className="w-4 h-4 text-slate-950 fill-current" />
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full relative bg-slate-900/80 backdrop-blur-xl border border-white/12 rounded-2xl p-3 shadow-2xl focus-within:border-indigo-500/50 focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all duration-300">
@@ -49,31 +95,31 @@ export function PromptInput({ onSend, isGenerating = false }) {
       <div className="flex items-center justify-between pt-2 border-t border-white/5 mt-1">
         {/* Left: Stack Selector & File Actions */}
         <div className="flex items-center gap-2">
-          {/* Stack Toggle */}
-          <div className="flex items-center bg-slate-950/80 p-0.5 rounded-xl border border-white/10 text-xs">
+          {/* Stack Toggle — compact pill, visual only, logic unchanged */}
+          <div className="flex items-center gap-0.5 bg-white/[0.03] p-0.5 rounded-full border border-white/[0.06] text-[10px]">
             <button
               type="button"
               onClick={() => setActiveStack('vanilla')}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg transition-all ${
+              title="Vanilla HTML/CSS/JS"
+              className={`px-2.5 py-1 rounded-full transition-all font-medium ${
                 activeStack === 'vanilla'
-                  ? 'bg-indigo-600 text-white font-medium shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-violet-600 text-white shadow-sm'
+                  : 'text-slate-500 hover:text-slate-300'
               }`}
             >
-              <Layers className="w-3 h-3" />
-              <span>Vanilla</span>
+              Vanilla
             </button>
             <button
               type="button"
               onClick={() => setActiveStack('react-tailwind')}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg transition-all ${
+              title="React + Tailwind"
+              className={`px-2.5 py-1 rounded-full transition-all font-medium ${
                 activeStack === 'react-tailwind'
-                  ? 'bg-purple-600 text-white font-medium shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-violet-600 text-white shadow-sm'
+                  : 'text-slate-500 hover:text-slate-300'
               }`}
             >
-              <Sparkles className="w-3 h-3" />
-              <span>React + Tailwind</span>
+              React
             </button>
           </div>
 
@@ -114,10 +160,10 @@ export function PromptInput({ onSend, isGenerating = false }) {
           >
             <Send className="w-4 h-4" />
           </button>
-        </div>
       </div>
     </div>
-  );
+  </div>
+);
 }
 
 export default PromptInput;

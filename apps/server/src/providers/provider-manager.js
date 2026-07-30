@@ -17,6 +17,8 @@ const MODEL_MAPPING = {
     'qwen-2.5-3b-instruct': 'llama-3.1-8b-instant',   // fast classifier
     'gemini-2.5-flash':     'llama-3.3-70b-versatile',  // best code-gen on Groq
     'llama-3.1-8b':         'llama-3.1-8b-instant',
+    'gpt-oss-120b':         'openai/gpt-oss-120b',
+    'qwen-27b':             'qwen/qwen3.6-27b',
   },
   gemini: {
     'qwen-2.5-3b-instruct': 'gemini-2.0-flash',
@@ -82,12 +84,15 @@ async function executeModelCall({ agentRole, messages, responseFormat }) {
     primaryModel = env.REVIEWER_MODEL;
   }
 
-  // Define fallbacks list — Groq first (fastest, working), OpenRouter last (currently unreachable)
+  // Define fallbacks list — Gemini right after primary (strong, reliable structured output),
+  // then Groq's stronger code model, then weaker Groq models, OpenRouter last (currently unreachable)
   const basePriorities = [
     { provider: primaryProvider, model: primaryModel },
+    { provider: 'gemini', model: 'gemini-2.5-flash' },
     { provider: 'groq', model: 'gemini-2.5-flash' },     // maps to llama-3.3-70b-versatile on Groq
     { provider: 'groq', model: 'llama-3.1-8b' },          // maps to llama-3.1-8b-instant on Groq
-    { provider: 'gemini', model: 'gemini-2.5-flash' },
+    { provider: 'groq', model: 'gpt-oss-120b' },          // maps to openai/gpt-oss-120b on Groq
+    { provider: 'groq', model: 'qwen-27b' },              // maps to qwen/qwen3.6-27b on Groq
     { provider: 'openrouter', model: 'llama-3.1-8b' },    // last: unreachable on some networks
   ];
 
@@ -107,10 +112,15 @@ async function executeModelCall({ agentRole, messages, responseFormat }) {
   for (const { provider, model } of providersPriority) {
     // Check if key is available
     const keyName = `${provider.toUpperCase()}_API_KEY`;
-    if (!env[keyName]) continue;
+    const apiKey = env[keyName];
+    if (!apiKey) {
+      console.log(`[ProviderManager] API Key for ${provider} (${keyName}) is not present in env!`);
+      continue;
+    }
 
     try {
-      console.log(`[ProviderManager] Invocating ${provider} with model ${model} for role ${agentRole}...`);
+      const resolvedModel = resolveModelName(provider, model);
+      console.log(`[ProviderManager] Invocating ${provider} (model: ${model}, resolved: ${resolvedModel}) for role ${agentRole}. Key: ${apiKey.substring(0, 4)}... length: ${apiKey.length}`);
       return await callProvider(provider, model, messages, responseFormat);
     } catch (err) {
       console.warn(`[ProviderManager] Failure on ${provider} for role ${agentRole}: ${err.message}. Trying next fallback...`);

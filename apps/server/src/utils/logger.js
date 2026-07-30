@@ -10,7 +10,7 @@
  * @param {Object} [meta] 
  */
 function info(message, meta) {
-  // Centralized logger info method placeholder
+  console.log(`[INFO] ${message}`, meta || '');
 }
 
 /**
@@ -19,7 +19,7 @@ function info(message, meta) {
  * @param {Object} [meta] 
  */
 function debug(message, meta) {
-  // Centralized logger debug method placeholder
+  console.log(`[DEBUG] ${message}`, meta || '');
 }
 
 /**
@@ -28,7 +28,7 @@ function debug(message, meta) {
  * @param {Object} [meta] 
  */
 function warn(message, meta) {
-  // Centralized logger warn method placeholder
+  console.warn(`[WARN] ${message}`, meta || '');
 }
 
 /**
@@ -37,7 +37,7 @@ function warn(message, meta) {
  * @param {Error|Object} [errorDetails] 
  */
 function error(message, errorDetails) {
-  // Centralized logger error method placeholder
+  console.error(`[ERROR] ${message}`, errorDetails || '');
 }
 
 const logger = {

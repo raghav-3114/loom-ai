@@ -17,7 +17,10 @@ function AppContent() {
   const { viewMode, toastMessage } = useUI();
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans antialiased overflow-hidden relative">
+    <div className="min-h-screen bg-[#0a0a0a] text-slate-100 font-mono antialiased overflow-hidden relative">
+      {/* Global film-grain texture, sits above the background, below content */}
+      <div className="grain-overlay" />
+
       {/* Dynamic View Transition */}
       {viewMode === 'landing' ? <LandingView /> : <ChatWorkspace />}
 

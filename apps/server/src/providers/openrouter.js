@@ -31,7 +31,7 @@ async function callOpenRouter({ model, messages, apiKey, responseFormat }) {
           'HTTP-Referer': 'https://loom.ai',
           'X-Title': 'Loom AI Builder',
         },
-        timeout: 8000,  // short timeout — fails fast if OpenRouter is unreachable on this network
+        timeout: 30000,  // 30 seconds to allow full code generation
       }
     );
 

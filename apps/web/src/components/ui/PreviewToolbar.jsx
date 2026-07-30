@@ -1,24 +1,50 @@
-import React from 'react';
-import { RotateCw, ExternalLink, Eye, Download } from 'lucide-react';
+import React, { useState } from 'react';
+import { RotateCw, ExternalLink, Eye, Download, Loader2 } from 'lucide-react';
 import DeviceSwitcher from './DeviceSwitcher';
 import Badge from './Badge';
 import { useProject } from '../../contexts/ProjectContext';
 import { useUI } from '../../contexts/UIContext';
 import { useChat } from '../../contexts/ChatContext';
-import { triggerProjectDownload } from '../../lib/apiClient';
 
 export function PreviewToolbar({ onRefresh }) {
   const { activeStack } = useProject();
   const { showToast } = useUI();
   const { activeProjectId } = useChat();
+  const [isDownloading, setIsDownloading] = useState(false);
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (!activeProjectId) {
       showToast('Generate a project before downloading', 'warning');
       return;
     }
-    triggerProjectDownload(activeProjectId);
-    showToast('Preparing ZIP export...', 'success');
+    
+    setIsDownloading(true);
+    showToast('Preparing ZIP export...', 'info');
+    
+    try {
+      const response = await fetch(`/api/download/${activeProjectId}`);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      }
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `loom-project-${activeProjectId}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      
+      showToast('ZIP downloaded successfully!', 'success');
+    } catch (err) {
+      console.error('[Download] Error:', err);
+      showToast(`ZIP download failed: ${err.message}. Please try again later.`, 'error');
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   return (
@@ -56,11 +82,16 @@ export function PreviewToolbar({ onRefresh }) {
 
         <button
           onClick={handleDownload}
-          className="p-1.5 text-slate-400 hover:text-slate-200 hover:bg-white/5 rounded-xl transition-colors"
+          disabled={isDownloading}
+          className="p-1.5 text-slate-400 hover:text-slate-200 hover:bg-white/5 rounded-xl transition-colors disabled:opacity-50"
           title="Download Project ZIP"
           aria-label="Download Project ZIP"
         >
-          <Download className="w-3.5 h-3.5" />
+          {isDownloading ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin text-indigo-400" />
+          ) : (
+            <Download className="w-3.5 h-3.5" />
+          )}
         </button>
       </div>
     </div>

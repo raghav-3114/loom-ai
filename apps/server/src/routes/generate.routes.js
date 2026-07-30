@@ -47,9 +47,9 @@ router.post('/', async (req, res) => {
       return;
     }
 
-    // Determine event outputs
     const explanationText = result.explanation || '';
     const summaryText = result.summary || 'Project generated successfully.';
+    const intent = result.intent || 'generate';
     const finalFiles = result.files || {};
 
     const dbState = JSON.stringify({
@@ -78,10 +78,12 @@ router.post('/', async (req, res) => {
     res.write(`data: ${JSON.stringify({
       type: 'done',
       projectId,
+      intent,
       files: finalFiles,
       explanation: explanationText,
       summary: summaryText,
     })}\n\n`);
+
 
     res.end();
   } catch (error) {

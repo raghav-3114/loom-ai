@@ -4,16 +4,21 @@
  */
 
 import React from 'react';
-import { User, RefreshCw, FileCode, Info } from 'lucide-react';
-import LoomLogo from '../ui/LoomLogo';
+import { User, Bot, RefreshCw, FileCode, Info, XCircle } from 'lucide-react';
 import CodeBlock from './CodeBlock';
 import Badge from '../ui/Badge';
 
 export function MessageBubble({ message, onRegenerate }) {
   const isUser = message.role === 'user';
+  
+  const borderBgClass = isUser 
+    ? 'bg-slate-900/40 border border-white/5' 
+    : message.isError 
+      ? 'bg-rose-950/30 border border-rose-500/25' 
+      : 'bg-slate-900/80 border border-white/10';
 
   return (
-    <div className={`flex gap-4 p-4 rounded-2xl transition-colors ${isUser ? 'bg-slate-900/40 border border-white/5' : 'bg-slate-900/80 border border-white/10'}`}>
+    <div className={`flex gap-4 p-4 rounded-2xl transition-colors ${borderBgClass}`}>
       {/* Avatar */}
       <div className="shrink-0 pt-0.5">
         {isUser ? (
@@ -21,8 +26,16 @@ export function MessageBubble({ message, onRegenerate }) {
             <User className="w-4 h-4" />
           </div>
         ) : (
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-            <LoomLogo size="sm" className="text-white scale-75" />
+          <div className={`w-8 h-8 rounded-xl flex items-center justify-center shadow-lg overflow-hidden ${
+            message.isError
+              ? 'bg-rose-500/10 border border-rose-500/20 text-rose-400'
+              : 'bg-gradient-to-br from-indigo-600 to-purple-600 text-white shadow-indigo-500/20'
+          }`}>
+            {message.isError ? (
+              <XCircle className="w-4.5 h-4.5" />
+            ) : (
+              <Bot className="w-4 h-4" />
+            )}
           </div>
         )}
       </div>
@@ -43,7 +56,7 @@ export function MessageBubble({ message, onRegenerate }) {
         </div>
 
         {/* Text Body */}
-        <div className="text-sm text-slate-200 leading-relaxed whitespace-pre-line">
+        <div className={`text-sm leading-relaxed whitespace-pre-line ${message.isError ? 'text-rose-200/90 font-medium' : 'text-slate-200'}`}>
           {message.content}
         </div>
 
@@ -67,8 +80,8 @@ export function MessageBubble({ message, onRegenerate }) {
           </div>
         )}
 
-        {/* Actions for Assistant message */}
-        {!isUser && (
+        {/* Actions for Assistant message — hidden for error messages to prevent re-submitting error text */}
+        {!isUser && !message.isError && (
           <div className="flex items-center gap-2 pt-1 text-xs">
             <button
               onClick={() => onRegenerate && onRegenerate(message.id)}
