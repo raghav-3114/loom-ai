@@ -87,7 +87,7 @@ const CustomCursor = () => {
       {/* Main sharp pointer (hollow arrow) */}
       <div
         ref={mainCursorRef}
-        className={`absolute left-0 top-0 transition-transform duration-75 ease-out will-change-transform ${
+        className={`absolute left-0 top-0 will-change-transform ${
           isHovering ? 'scale-90 text-indigo-300' : 'scale-100 text-white'
         }`}
       >

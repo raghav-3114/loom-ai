@@ -38,7 +38,12 @@ router.post('/', async (req, res) => {
       prompt,
       stack,
       files: {},
-      history: []
+      history: [],
+      onProgress: (message) => {
+        if (!res.writableEnded) {
+          res.write(`data: ${JSON.stringify({ type: 'thinking', message })}\n\n`);
+        }
+      },
     });
 
     if (result.errors && result.errors.length > 0) {

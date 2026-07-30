@@ -28,6 +28,8 @@ const GraphState = Annotation.Root({
   retryCount: Annotation(),
   explanation: Annotation(),
   errors: Annotation(),
+  // Runtime-only callback used by HTTP routes to stream actual graph stages.
+  onProgress: Annotation(),
 });
 
 /**
@@ -187,7 +189,8 @@ async function runGraph(input) {
     stack: input.stack || 'vanilla',
     history: compressedHistory,
     retryCount: 0,
-    errors: []
+    errors: [],
+    onProgress: input.onProgress,
   });
   return result;
 }

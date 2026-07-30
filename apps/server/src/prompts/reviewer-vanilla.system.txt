@@ -42,6 +42,9 @@ Set "approved": false, no matter how the dimensions above score, if ANY of the f
 - No CSS transitions anywhere
 - No loading/feedback state for anything that loads or submits dynamically
 - No responsive/mobile behavior at all
+- First screen does not fill the viewport (`min-height: 100vh`/`100svh` or equivalent is missing)
+- Visible buttons, menus, search fields, tabs, modals, or other controls have no implemented JavaScript behavior
+- Image-led output repeats an image URL or uses a generic image placeholder service
 - Output ignores or contradicts the Design Specification
 - A feature explicitly requested by the user or the Design Specification is missing
 - Weak resemblance to a well-known product the user referenced (e.g. a "Netflix clone" with only 1 content row, no search, no hover previews)

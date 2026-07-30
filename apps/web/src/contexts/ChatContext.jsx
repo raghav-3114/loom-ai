@@ -66,7 +66,16 @@ export function ChatProvider({ children }) {
       });
 
       if (!response.ok) {
-        throw new Error(`Server returned HTTP ${response.status}`);
+        const rawBody = await response.text();
+        let body = null;
+        try {
+          body = rawBody ? JSON.parse(rawBody) : null;
+        } catch {
+          body = null;
+        }
+        const message = body?.error?.message || body?.error || rawBody ||
+          `The AI backend did not respond. Start the server on port 3001 and configure a provider API key.`;
+        throw new Error(message);
       }
 
       const reader = response.body.getReader();
@@ -160,7 +169,7 @@ export function ChatProvider({ children }) {
         id: `err-${Date.now()}`,
         role: 'assistant',
         isError: true,
-        content: `Error: ${error.message}. Please check that the server is running and your API keys are configured correctly.`,
+        content: `Error: ${error.message}`,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
       setMessages((prev) => [...prev, errorMsg]);

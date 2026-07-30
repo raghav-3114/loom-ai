@@ -46,6 +46,11 @@ router.post('/', async (req, res) => {
       stack: stack || project.stack,
       files: existingFiles,
       history: chatHistory,
+      onProgress: (progressMessage) => {
+        if (!res.writableEnded) {
+          res.write(`data: ${JSON.stringify({ type: 'thinking', message: progressMessage })}\n\n`);
+        }
+      },
     });
 
     if (result.errors && result.errors.length > 0) {

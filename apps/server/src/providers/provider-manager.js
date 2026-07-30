@@ -42,7 +42,7 @@ function resolveModelName(provider, model) {
 /**
  * Dispatches LLM call to specified provider.
  */
-async function callProvider(provider, modelName, messages, responseFormat) {
+async function callProvider(provider, modelName, messages, responseFormat, maxTokens) {
   const resolvedModel = resolveModelName(provider, modelName);
   
   switch (provider) {
@@ -54,7 +54,7 @@ async function callProvider(provider, modelName, messages, responseFormat) {
       return await callGroq({ model: resolvedModel, messages, apiKey: env.GROQ_API_KEY, responseFormat });
     case 'openrouter':
       if (!env.OPENROUTER_API_KEY) throw new Error('OPENROUTER_API_KEY not configured');
-      return await callOpenRouter({ model: resolvedModel, messages, apiKey: env.OPENROUTER_API_KEY, responseFormat });
+      return await callOpenRouter({ model: resolvedModel, messages, apiKey: env.OPENROUTER_API_KEY, responseFormat, maxTokens });
     default:
       throw new Error(`Unsupported provider: ${provider}`);
   }
@@ -72,6 +72,13 @@ async function callProvider(provider, modelName, messages, responseFormat) {
 async function executeModelCall({ agentRole, messages, responseFormat }) {
   // Read config from env (fully configurable)
   let primaryProvider, primaryModel;
+  const maxTokensByRole = {
+    router: 1024,
+    planner: 2048,
+    builder: env.BUILDER_MAX_TOKENS,
+    reviewer: 4096,
+  };
+  const maxTokens = maxTokensByRole[agentRole] || 4096;
 
   if (agentRole === 'router') {
     primaryProvider = env.ROUTER_PROVIDER;
@@ -89,15 +96,9 @@ async function executeModelCall({ agentRole, messages, responseFormat }) {
 
   // Define fallbacks list — Gemini right after primary (strong, reliable structured output),
   // then Groq's stronger code model, then weaker Groq models, OpenRouter last (currently unreachable)
-  const basePriorities = [
-    { provider: primaryProvider, model: primaryModel },
-    { provider: 'gemini', model: 'gemini-2.5-flash' },
-    { provider: 'groq', model: 'gemini-2.5-flash' },     // maps to llama-3.3-70b-versatile on Groq
-    { provider: 'groq', model: 'llama-3.1-8b' },          // maps to llama-3.1-8b-instant on Groq
-    { provider: 'groq', model: 'gpt-oss-120b' },          // maps to openai/gpt-oss-120b on Groq
-    { provider: 'groq', model: 'qwen-27b' },              // maps to qwen/qwen3.6-27b on Groq
-    { provider: 'openrouter', model: 'llama-3.1-8b' },    // last: unreachable on some networks
-  ];
+  // Do not silently send prompts to a different provider. The configured
+  // provider and model are the only route used for a request.
+  const basePriorities = [{ provider: primaryProvider, model: primaryModel }];
 
   // Filter list to keep only unique combinations
   const seen = new Set();
@@ -124,7 +125,7 @@ async function executeModelCall({ agentRole, messages, responseFormat }) {
     try {
       const resolvedModel = resolveModelName(provider, model);
       console.log(`[ProviderManager] Invocating ${provider} (model: ${model}, resolved: ${resolvedModel}) for role ${agentRole}. Key: ${apiKey.substring(0, 4)}... length: ${apiKey.length}`);
-      return await callProvider(provider, model, messages, responseFormat);
+      return await callProvider(provider, model, messages, responseFormat, maxTokens);
     } catch (err) {
       console.warn(`[ProviderManager] Failure on ${provider} for role ${agentRole}: ${err.message}. Trying next fallback...`);
       lastError = err;

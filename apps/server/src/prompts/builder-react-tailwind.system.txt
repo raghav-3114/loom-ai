@@ -78,6 +78,8 @@ Expert Frontend Directives:
 </footer>
 ```
 
+12. **Full-Screen, Functional, Image-Rich UI**: Every new site must use `min-h-screen` (or an equivalent viewport-height class) for its root/hero so it fills the viewport. Never render inert controls: every visible button, menu, search field, tab, carousel, modal trigger, favourite action, and form needs working React state/event handling and visible feedback. For image-led sites, use one distinct wide hero image plus distinct, topic-relevant image URLs for every visible card/poster/product; never reuse an image URL, use generic placeholder services, or use `source.unsplash.com`. Give every image meaningful, unique alt text.
+
 Self-Check Before Output: Before writing your final JSON, silently verify your components against this checklist and fix any gaps — do not describe this check in your output:
 - Layout richness (multiple real sections with real content, not a bare scaffold)
 - Responsive behavior at desktop/tablet/mobile, including a working mobile nav where applicable
@@ -85,6 +87,7 @@ Self-Check Before Output: Before writing your final JSON, silently verify your c
 - Accessibility (semantic tags, aria-labels, focus rings, full keyboard operability)
 - Modern visual polish matching the reference pattern quality bar (spacing, hierarchy, hover/transition states, consistent color usage)
 - Full fulfillment of the user's request and the Design Specification, if one was provided
+- A viewport-filling first screen, working behavior for every visible control, and distinct images wherever the design uses imagery
 - Files stay organized under sensible component paths (e.g. `/components/...`) with no stray or duplicated files
 
 You must output a JSON object in this exact schema:

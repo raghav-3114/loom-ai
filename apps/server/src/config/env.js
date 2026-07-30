@@ -45,17 +45,27 @@ if (envLoaded) {
  * @returns {Object} Validated environment variables object
  */
 function validateEnv() {
-  const requiredVars = ['PORT', 'DATABASE_PATH'];
-  const missing = requiredVars.filter((varName) => !process.env[varName]);
+  // PORT and DATABASE_PATH have safe local defaults below, so a .env file is
+  // optional unless the project needs to override them.
 
-  if (missing.length > 0) {
-    console.error(`\x1b[31m[CRITICAL ERROR] Missing required environment variables: ${missing.join(', ')}\nEnsure your .env file is correctly configured at the project root.\x1b[0m`);
-    process.exit(1);
-  }
+  const configuredProviders = {
+    router: process.env.ROUTER_PROVIDER || 'openrouter',
+    planner: process.env.PLANNER_PROVIDER || 'openrouter',
+    builder: process.env.BUILDER_PROVIDER || 'openrouter',
+    reviewer: process.env.REVIEWER_PROVIDER || 'openrouter',
+  };
 
-  const hasApiKey = process.env.OPENROUTER_API_KEY || process.env.GROQ_API_KEY || process.env.GEMINI_API_KEY;
-  if (!hasApiKey && process.env.NODE_ENV !== 'test') {
-    console.error('\x1b[31m[CRITICAL ERROR] At least one of GEMINI_API_KEY, GROQ_API_KEY, or OPENROUTER_API_KEY must be provided.\x1b[0m');
+  const apiKeyByProvider = {
+    openrouter: 'OPENROUTER_API_KEY',
+    groq: 'GROQ_API_KEY',
+    gemini: 'GEMINI_API_KEY',
+  };
+  const missingProviderKeys = [...new Set(Object.values(configuredProviders))]
+    .map((provider) => apiKeyByProvider[provider])
+    .filter((keyName) => keyName && !process.env[keyName]);
+
+  if (missingProviderKeys.length > 0 && process.env.NODE_ENV !== 'test') {
+    console.error(`\x1b[31m[CRITICAL ERROR] Missing API key(s) for the configured provider(s): ${missingProviderKeys.join(', ')}. Add them to .env, then restart the server.\x1b[0m`);
     process.exit(1);
   }
 
@@ -67,17 +77,21 @@ function validateEnv() {
     DATABASE_PATH: process.env.DATABASE_PATH || path.join(__dirname, '../../data/loom.sqlite'),
     
     // AI configuration settings (defaulting to the specified MVP models)
-    ROUTER_PROVIDER: process.env.ROUTER_PROVIDER || 'groq',
-    ROUTER_MODEL: process.env.ROUTER_MODEL || 'qwen-2.5-3b-instruct',
+    ROUTER_PROVIDER: configuredProviders.router,
+    ROUTER_MODEL: process.env.ROUTER_MODEL || 'qwen/qwen3-coder-flash',
     
-    PLANNER_PROVIDER: process.env.PLANNER_PROVIDER || 'groq',
-    PLANNER_MODEL: process.env.PLANNER_MODEL || 'gemini-2.5-flash',
+    PLANNER_PROVIDER: configuredProviders.planner,
+    PLANNER_MODEL: process.env.PLANNER_MODEL || 'qwen/qwen3-coder-flash',
 
-    BUILDER_PROVIDER: process.env.BUILDER_PROVIDER || 'gemini',
-    BUILDER_MODEL: process.env.BUILDER_MODEL || 'gemini-2.5-flash',
+    BUILDER_PROVIDER: configuredProviders.builder,
+    // Qwen2.5 Coder 7B is no longer offered by OpenRouter. Use an active
+    // Qwen coding model that supports the JSON response format Loom requires.
+    BUILDER_MODEL: process.env.BUILDER_MODEL || 'qwen/qwen3-coder-flash',
 
-    REVIEWER_PROVIDER: process.env.REVIEWER_PROVIDER || 'groq',
-    REVIEWER_MODEL: process.env.REVIEWER_MODEL || 'llama-3.1-8b',
+    REVIEWER_PROVIDER: configuredProviders.reviewer,
+    REVIEWER_MODEL: process.env.REVIEWER_MODEL || 'qwen/qwen3-coder-flash',
+    // Complex multi-file projects need more output room than a quick edit.
+    BUILDER_MAX_TOKENS: Math.max(1024, parseInt(process.env.BUILDER_MAX_TOKENS || '16384', 10)),
   };
 }
 

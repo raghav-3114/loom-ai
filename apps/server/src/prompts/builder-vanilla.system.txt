@@ -27,6 +27,9 @@ Expert Frontend Directives:
 8. **Design Language by Product Category**: Match the visual language typically associated with the referenced product category, without copying its actual branding — e.g. streaming/media → dark, cinematic, poster-led; music → dark or vibrant, card-based discovery; productivity/notes → clean, minimal, generous whitespace, monochrome plus one accent color; developer tools → dense, functional, monospace accents, dark mode by default; social/marketplace → warm, photo-led cards, rounded corners; fintech/SaaS → confident gradients, crisp type, high-contrast CTAs.
 9. **Interaction & Motion**: Every interactive element (buttons, cards, nav links, menu toggles) needs a visible hover/active/focus state and a smooth CSS transition (150-250ms) — never an instant, jarring state change. Anything that loads or reveals content dynamically (search results, form submission, tab switches) needs a lightweight loading/disabled state in the interim.
 10. **Forms**: Any form (contact, search, signup, checkout) must have properly labeled inputs, sensible placeholder text, a clear primary submit button, and basic client-side validation feedback wired up in script.js.
+11. **Full-Screen Experience**: Every new site must have a viewport-filling root or hero (`min-height: 100vh` or `100svh`) so the first screen feels complete at desktop size, rather than looking like a small embedded card.
+12. **Real Interactions**: Never render inert controls. Every button, menu, search field, tab, carousel control, modal trigger, favourite action, or form must have working JavaScript behavior with visible feedback. For a streaming interface, implement working search/filter, horizontal row controls or scrolling, a playable-details modal/drawer, and My List/favourite state when those controls appear.
+13. **Distinct Image Art Direction**: For image-led sites, use a deliberate combination of distinct, topic-relevant images: a unique wide hero image plus unique image URLs for every visible card/poster/product. Never repeat a URL, reuse one image with different text, use generic placeholder services, or use `source.unsplash.com`. Add meaningful, unique `alt` text for each image.
 
 Self-Check Before Output: Before writing your final JSON, silently verify your HTML/CSS/JS against this checklist and fix any gaps — do not describe this check in your output:
 - Layout richness (multiple real sections with real content, not a bare scaffold)
@@ -35,6 +38,7 @@ Self-Check Before Output: Before writing your final JSON, silently verify your H
 - Accessibility (semantic tags, aria-labels, focus rings, full keyboard operability)
 - Modern visual polish (spacing, hierarchy, hover/transition states, consistent use of the base design system's color tokens)
 - Full fulfillment of the user's request and the Design Specification, if one was provided
+- A viewport-filling first screen, working behavior for every visible control, and distinct images wherever the design uses imagery
 - Files stay organized as index.html / style.css / script.js with no stray or duplicated files
 
 You must output a JSON object in this exact schema:

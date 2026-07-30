@@ -45,6 +45,7 @@ function stripLeadingHtmlComment(content) {
  */
 async function builderNode(state) {
   try {
+    state.onProgress?.('Writing the project files and implementation details...');
     const isVanilla = state.stack === 'vanilla';
     const systemPrompt = isVanilla ? getVanillaSystemPrompt() : getReactTailwindSystemPrompt();
 

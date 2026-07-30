@@ -24,6 +24,12 @@ function countOccurrences(text, regex) {
   return matches ? matches.length : 0;
 }
 
+function imageReferences(text) {
+  const htmlSources = [...text.matchAll(/\bsrc\s*=\s*["']([^"']+)["']/gi)].map((match) => match[1]);
+  const cssSources = [...text.matchAll(/url\(\s*["']?([^\s"')]+)["']?\s*\)/gi)].map((match) => match[1]);
+  return [...htmlSources, ...cssSources].filter((source) => !source.startsWith('data:'));
+}
+
 /** Whether the Design Specification implies a card/grid-based layout is expected. */
 function expectsCardLayout(designSpec) {
   if (!designSpec) return false;
@@ -60,6 +66,35 @@ function runHardRejectionChecks(files, designSpec) {
       file: 'system',
       issue: `Found ${placeholderImageCount} generic placeholder image URLs (e.g. via.placeholder.com) repeated across the project.`,
       suggestion: 'Use varied, topic-appropriate image sources/descriptions instead of repeating a generic placeholder image service.',
+    });
+  }
+
+  const viewportFillingLayout = /min-height\s*:\s*100(?:vh|svh|dvh)|min-h-(?:screen|\[100(?:vh|svh|dvh)\])/i.test(combined);
+  if (!viewportFillingLayout) {
+    findings.push({
+      file: 'system',
+      issue: 'The generated site does not include a viewport-filling root or hero layout.',
+      suggestion: 'Use min-height: 100vh/100svh in Vanilla CSS or min-h-screen in React/Tailwind for the page root or hero.',
+    });
+  }
+
+  const hasButtons = /<button\b/i.test(combined);
+  const hasInteractionCode = /addEventListener\s*\(\s*["'](?:click|submit|input|change|keydown)["']|\bon(?:Click|Submit|Change|Input|KeyDown)\s*=|\bonclick\s*=/i.test(combined);
+  if (hasButtons && !hasInteractionCode) {
+    findings.push({
+      file: 'system',
+      issue: 'The generated output includes buttons but no detectable interaction handlers.',
+      suggestion: 'Wire each visible control to JavaScript event listeners or React event/state handlers and provide visible feedback.',
+    });
+  }
+
+  const sources = imageReferences(combined);
+  const repeatedSources = [...new Set(sources.filter((source, index) => sources.indexOf(source) !== index))];
+  if (repeatedSources.length > 0) {
+    findings.push({
+      file: 'system',
+      issue: `The generated output repeats ${repeatedSources.length} image URL(s).`,
+      suggestion: 'Use a distinct, topic-relevant image URL for the hero and every visible image card or poster.',
     });
   }
 
@@ -135,6 +170,7 @@ function runHardRejectionChecks(files, designSpec) {
  */
 async function reviewerNode(state) {
   try {
+    state.onProgress?.('Reviewing code quality, responsiveness, and accessibility...');
     if (state.errors && state.errors.length > 0) {
       console.warn('[ReviewerAgent] Skipping review because builder failed with errors:', state.errors);
       return {

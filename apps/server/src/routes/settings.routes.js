@@ -18,6 +18,7 @@ const PROVIDER_LABELS = {
 };
 
 const MODEL_LABELS = {
+  'qwen/qwen3-coder-flash': 'Qwen3 Coder Flash',
   'qwen-2.5-3b-instruct': 'Qwen 2.5 3B Instruct',
   'gemini-2.5-flash': 'Gemini 2.5 Flash',
   'llama-3.1-8b': 'Llama 3.1 8B',

@@ -15,6 +15,7 @@ const { repairJson } = require('../utils/json-repair');
  */
 async function routerNode(state) {
   try {
+    state.onProgress?.('Classifying your request and selecting the project stack...');
     const promptPath = path.join(__dirname, '../prompts/router.system.txt');
     const systemPrompt = fs.readFileSync(promptPath, 'utf8');
 

@@ -18,6 +18,7 @@ const { designSpecSchema } = require('../schema/agent.schema');
  */
 async function plannerNode(state) {
   try {
+    state.onProgress?.('Planning the page structure, components, and interactions...');
     const promptPath = path.join(__dirname, '../prompts/planner.system.txt');
     const systemPrompt = fs.readFileSync(promptPath, 'utf8');
 
